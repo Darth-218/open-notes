@@ -1,0 +1,52 @@
+knowledge_base:
+  path: "~/knowledge-base"
+  extensions: [".md"]
+  auto_index: true
+  
+embedding:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  batch_size: 32
+  device: "cpu"
+  
+vector_db:
+  type: "mindb"
+  path: "~/.open_notes/vectors"
+  preliminary_top_k: 500
+  
+keyword_index:
+  type: "sqlite_fts"
+  path: "~/.open_notes/keywords.db"
+  
+llm:
+  provider: "llama_cpp"
+  model_path: "~/models/qwen2.5-0.5b-q4_k_m.gguf"
+  temperature: 0.7
+  max_tokens: 2048
+  
+chunker:
+  strategy: "by_heading"
+  max_chars_per_chunk: 1000
+  overlap_chars: 100
+  
+search:
+  top_k: 5
+  vector_weight: 0.7
+  keyword_weight: 0.3
+  mode: "hybrid"
+  
+mcp:
+  host: "127.0.0.1"
+  port: 8765
+  transport: "stdio"
+  
+rag:
+  prompt_template: |
+    You are a helpful assistant. Use the following context to answer the question.
+    
+    Context:
+    {context}
+    
+    Question: {question}
+    
+    Answer:
