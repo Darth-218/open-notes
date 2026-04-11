@@ -1,6 +1,11 @@
+"""Query engine for hybrid search across the knowledge base.
+
+This module provides the QueryEngine class for searching notes using
+vector search, keyword search, or a hybrid combination of both.
+"""
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +13,14 @@ from open_notes.models import SearchResult
 
 
 def normalize_scores(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize scores to [0, 1] range using min-max normalization.
+
+    Args:
+        results: List of result dictionaries with 'score' key.
+
+    Returns:
+        Results with added 'normalized_score' key.
+    """
     if not results:
         return []
 
@@ -29,6 +42,24 @@ def reciprocal_rank_fusion(
     results_lists: list[list[dict[str, Any]]],
     k: int = 60,
 ) -> list[dict[str, Any]]:
+    """Fuse ranked lists using Reciprocal Rank Fusion (RRF).
+
+    RRF combines multiple ranked lists into a single unified ranking.
+    Documents appearing in multiple lists benefit from their combined ranks.
+
+    Args:
+        results_lists: List of ranked result lists to fuse.
+        k: Constant for RRF formula (default: 60). Higher values
+            give more weight to lower ranks.
+
+    Returns:
+        Fused and reranked results.
+
+    Example:
+        >>> vector_results = [{"chunk_id": "1", "score": 0.9}, {"chunk_id": "2", "score": 0.8}]
+        >>> keyword_results = [{"chunk_id": "2", "score": 0.7}, {"chunk_id": "3", "score": 0.6}]
+        >>> fused = reciprocal_rank_fusion([vector_results, keyword_results])
+    """
     doc_scores: dict[str, float] = {}
 
     for results in results_lists:
@@ -60,12 +91,34 @@ def reciprocal_rank_fusion(
 
 
 class QueryEngine:
+    """Hybrid search engine combining vector and keyword search.
+
+    Provides unified search across the knowledge base using either vector
+    similarity, keyword matching, or both with reciprocal rank fusion.
+
+    Attributes:
+        vector_db: Vector database for semantic search.
+        keyword_index: Keyword index for full-text search.
+        embedding: Embedding model for text vectorization.
+
+    Example:
+        >>> engine = QueryEngine(vdb, kwdx, emb)
+        >>> results = engine.search("machine learning", mode="hybrid", top_k=5)
+    """
+
     def __init__(
         self,
         vector_db: Any,
         keyword_index: Any,
         embedding: Any,
     ):
+        """Initialize QueryEngine with search components.
+
+        Args:
+            vector_db: VectorDB instance for semantic search.
+            keyword_index: KeywordIndex instance for full-text search.
+            embedding: BaseEmbedding instance for text vectorization.
+        """
         self.vector_db = vector_db
         self.keyword_index = keyword_index
         self.embedding = embedding
@@ -78,6 +131,25 @@ class QueryEngine:
         vector_weight: float = 0.7,
         keyword_weight: float = 0.3,
     ) -> list[SearchResult]:
+        """Search the knowledge base.
+
+        Performs search using the specified mode and returns ranked results.
+
+        Args:
+            query: Search query string.
+            mode: Search mode - "vector", "keyword", or "hybrid" (default: "hybrid").
+            top_k: Number of results to return (default: 5).
+            vector_weight: Weight for vector search in hybrid mode (default: 0.7).
+            keyword_weight: Weight for keyword search in hybrid mode (default: 0.3).
+
+        Returns:
+            List of SearchResult objects ranked by relevance.
+
+        Example:
+            >>> results = engine.search("neural networks", mode="hybrid", top_k=10)
+            >>> for r in results:
+            ...     print(f"{r.heading_path}: {r.score:.3f}")
+        """
         if not query.strip():
             return []
 
@@ -91,6 +163,15 @@ class QueryEngine:
         return []
 
     def _vector_search(self, query: str, top_k: int) -> list[SearchResult]:
+        """Perform vector-based semantic search.
+
+        Args:
+            query: Search query.
+            top_k: Number of results.
+
+        Returns:
+            List of SearchResult from vector search.
+        """
         query_embedding = self.embedding.embed([query])[0]
         results = self.vector_db.search(query_embedding, top_k)
 
@@ -111,6 +192,15 @@ class QueryEngine:
         return search_results
 
     def _keyword_search(self, query: str, top_k: int) -> list[SearchResult]:
+        """Perform keyword-based full-text search.
+
+        Args:
+            query: Search query.
+            top_k: Number of results.
+
+        Returns:
+            List of SearchResult from keyword search.
+        """
         results = self.keyword_index.search(query, top_k)
 
         search_results = []
@@ -136,6 +226,19 @@ class QueryEngine:
         vector_weight: float,
         keyword_weight: float,
     ) -> list[SearchResult]:
+        """Perform hybrid search combining vector and keyword search.
+
+        Uses normalized scores and reciprocal rank fusion to combine results.
+
+        Args:
+            query: Search query.
+            top_k: Number of results.
+            vector_weight: Weight for vector search.
+            keyword_weight: Weight for keyword search.
+
+        Returns:
+            List of SearchResult from hybrid search.
+        """
         vector_results = self._vector_search(query, top_k)
         keyword_results = self._keyword_search(query, top_k)
 

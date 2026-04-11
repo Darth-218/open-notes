@@ -13,6 +13,18 @@ from open_notes.config import Config
 @click.option("--config", type=click.Path(), help="Path to config file")
 @click.pass_context
 def cli(ctx: click.Context, config: str | None) -> None:
+    """Main entry point for the OpenNotes CLI.
+
+    Initializes the application context with the specified configuration
+    and sets up the OpenNotes application instance.
+
+    Args:
+        ctx: Click context object for passing data between commands.
+        config: Optional path to a custom configuration file.
+
+    Returns:
+        None. Initializes ctx.obj with config and app instances.
+    """
     ctx.ensure_object(dict)
     ctx.obj["config"] = Config.load(config) if config else Config.load()
     ctx.obj["app"] = OpenNotes(ctx.obj["config"])
@@ -21,6 +33,14 @@ def cli(ctx: click.Context, config: str | None) -> None:
 @cli.command()
 @click.pass_context
 def index(ctx: click.Context) -> None:
+    """Index all notes in the knowledge base.
+
+    Scans the configured knowledge base directory and indexes all notes
+    for semantic search. The index is used by search and query commands.
+
+    Returns:
+        None. Prints JSON result of indexing operation to stdout.
+    """
     app: OpenNotes = ctx.obj["app"]
     result = app.index_all()
     click.echo(json.dumps(result, indent=2))
@@ -31,6 +51,20 @@ def index(ctx: click.Context) -> None:
 @click.option("--top-k", "-k", default=5, type=int, help="Number of results")
 @click.pass_context
 def search(ctx: click.Context, query: str, top_k: int) -> None:
+    """Search notes using semantic similarity.
+
+    Performs a semantic search across all indexed notes using the configured
+    embedding model and returns the most similar results.
+
+    Args:
+        query: The search query string.
+
+    Returns:
+        None. Prints search results with scores to stdout.
+
+    Options:
+        -k, --top-k: Number of results to return (default: 5).
+    """
     app: OpenNotes = ctx.obj["app"]
     results = app.search(query, top_k=top_k)
 
@@ -50,6 +84,20 @@ def search(ctx: click.Context, query: str, top_k: int) -> None:
 @click.option("--top-k", "-k", default=5, type=int, help="Number of context chunks")
 @click.pass_context
 def query(ctx: click.Context, query: str, top_k: int) -> None:
+    """Query notes using RAG with an LLM.
+
+    Performs retrieval-augmented generation by finding relevant notes and
+    generating an answer using the configured LLM.
+
+    Args:
+        query: The question to ask about the notes.
+
+    Returns:
+        None. Prints the generated answer and sources to stdout.
+
+    Options:
+        -k, --top-k: Number of context chunks to retrieve (default: 5).
+    """
     app: OpenNotes = ctx.obj["app"]
     result = app.query(query, top_k=top_k)
 
@@ -68,6 +116,17 @@ def query(ctx: click.Context, query: str, top_k: int) -> None:
 @cli.command()
 @click.pass_context
 def serve(ctx: click.Context) -> None:
+    """Start the MCP server for remote note queries.
+
+    Initializes and runs the Model Context Protocol server, allowing
+    remote clients to query notes via stdio or HTTP transport.
+
+    Returns:
+        None. Server runs until terminated.
+
+    Raises:
+        SystemExit: If transport type is invalid.
+    """
     config: Config = ctx.obj["config"]
     app: OpenNotes = ctx.obj["app"]
 
@@ -90,6 +149,14 @@ def serve(ctx: click.Context) -> None:
 @cli.command()
 @click.pass_context
 def watch(ctx: click.Context) -> None:
+    """Watch for file changes and auto-index notes.
+
+    Starts a file system watcher that monitors the knowledge base
+    directory for changes and automatically re-indexes modified notes.
+
+    Returns:
+        None. Runs indefinitely until interrupted.
+    """
     app: OpenNotes = ctx.obj["app"]
     app.watch()
 
@@ -97,6 +164,14 @@ def watch(ctx: click.Context) -> None:
 @cli.command()
 @click.pass_context
 def config(ctx: click.Context) -> None:
+    """Display the current configuration.
+
+    Shows all configuration values including paths, models, and settings
+    that are currently in use.
+
+    Returns:
+        None. Prints configuration values to stdout.
+    """
     cfg: Config = ctx.obj["config"]
     click.echo("Configuration:")
     click.echo(f"  knowledge_base_path: {cfg.knowledge_base_path}")
@@ -115,6 +190,14 @@ def config(ctx: click.Context) -> None:
 @cli.command()
 @click.pass_context
 def stats(ctx: click.Context) -> None:
+    """Display statistics about the indexed notes.
+
+    Shows statistics including the total number of notes, chunks, and
+    embeddings in the knowledge base.
+
+    Returns:
+        None. Prints JSON statistics to stdout.
+    """
     app: OpenNotes = ctx.obj["app"]
     result = app.get_stats()
     click.echo(json.dumps(result, indent=2))

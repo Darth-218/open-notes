@@ -7,11 +7,30 @@ from open_notes.indexer.parser import MarkdownParser, ParsedHeading
 
 
 class MarkdownChunker:
+    """Chunks Markdown content into smaller sections for indexing.
+
+    Splits content either by headings (if present and under max_chars) or by
+    paragraph boundaries with a maximum character limit. Supports overlapping
+    chunks to maintain context across chunk boundaries.
+
+    Attributes:
+        max_chars: Maximum number of characters per chunk.
+        overlap_chars: Number of characters to overlap between chunks when
+            splitting large sections.
+    """
+
     def __init__(
         self,
         max_chars: int = 1000,
         overlap_chars: int = 100,
     ):
+        """Initialize the MarkdownChunker.
+
+        Args:
+            max_chars: Maximum number of characters per chunk. Defaults to 1000.
+            overlap_chars: Number of characters to overlap between chunks
+                when splitting large sections. Defaults to 100.
+        """
         self.max_chars = max_chars
         self.overlap_chars = overlap_chars
         self.parser = MarkdownParser()
@@ -19,6 +38,27 @@ class MarkdownChunker:
     def chunk(
         self, note_id: str, content: str
     ) -> list[dict[str, Any]]:
+        """Chunk Markdown content into smaller sections.
+
+        If the content contains headings, splits by headings first. If a
+        heading section exceeds max_chars, further splits by paragraph or
+        word boundaries. If no headings exist, chunks by size directly.
+
+        Args:
+            note_id: The unique identifier for the note being chunked.
+            content: The Markdown content to chunk.
+
+        Returns:
+            A list of chunk dictionaries, each containing:
+                - id: Unique chunk identifier (UUID).
+                - note_id: The note identifier.
+                - content: The chunk text content.
+                - heading_path: The heading path in the document
+                    (e.g., "Introduction/Background").
+                - position: Character position of the chunk in the
+                    original document.
+                - char_count: Number of characters in the chunk.
+        """
         headings, content = self.parser.parse(content)
 
         chunks = []
@@ -53,6 +93,16 @@ class MarkdownChunker:
     def _split_by_headings(
         self, content: str, headings: list[ParsedHeading]
     ) -> list[dict[str, Any]]:
+        """Split content into sections based on heading positions.
+
+        Args:
+            content: The Markdown content to split.
+            headings: List of parsed headings.
+
+        Returns:
+            A list of section dictionaries with heading_path, content,
+            and position keys.
+        """
         sections = []
         content_len = len(content)
 
@@ -84,6 +134,22 @@ class MarkdownChunker:
         heading_path: str,
         base_position: int = 0,
     ) -> list[dict[str, Any]]:
+        """Split content into chunks by maximum character size.
+
+        Splits by paragraph boundaries first, then by word boundaries
+        if paragraphs exceed max_chars. Includes overlap between
+        consecutive chunks.
+
+        Args:
+            note_id: The note identifier.
+            content: The content to chunk.
+            heading_path: The heading path for these chunks.
+            base_position: The base character position in the original
+                document.
+
+        Returns:
+            A list of chunk dictionaries.
+        """
         if len(content) <= self.max_chars:
             return [
                 {
@@ -164,4 +230,12 @@ class MarkdownChunker:
         return chunks
 
     def _build_heading_path(self, headings: list[ParsedHeading]) -> str:
+        """Build a heading path string from a list of headings.
+
+        Args:
+            headings: List of headings to join.
+
+        Returns:
+            A path string with headings separated by "/".
+        """
         return "/".join(h.text for h in headings)
