@@ -19,29 +19,28 @@
         # Custom Python environment with all required packages
         # Uses CPU versions by default, CUDA if available
         pythonEnv = pkgs.python3.withPackages (python-packages: with python-packages; [
-          # Core dependencies
+          # Core dependencies (from pyproject.toml)
           pyyaml
+          python-frontmatter
+          watchdog
+          faiss
+          sentence-transformers
+          langchain
+          langchain-community
+          llama-cpp-python
+          click
+          tqdm
+
+          # Additional dependencies
           numpy
           scipy
           scikit-learn
-
-          # ML/NLP packages
-          faiss
           torch
           transformers
           huggingface-hub
-
-          # CLI tools
-          click
-          tqdm
-          watchdog
           jinja2
           diskcache
           typing-extensions
-
-          # Langchain
-          langchain
-          langchain-community
 
           # sentence-transformers - skip tests to avoid build failures
           (sentence-transformers.overrideAttrs (old: {
@@ -53,8 +52,7 @@
             cudaSupport = systemHasCUDA;
           })
 
-          # Other required packages
-          python-frontmatter
+          # MCP SDK
           mcp
         ]);
       in
@@ -88,25 +86,28 @@
           src = ./.;
 
           dependencies = with pkgs.python3.pkgs; [
+            # Core dependencies (from pyproject.toml)
             pyyaml
+            python-frontmatter
+            watchdog
+            faiss
+            sentence-transformers
+            langchain
+            langchain-community
+            llama-cpp-python
+            click
+            tqdm
+
+            # Additional dependencies
             numpy
             scipy
             scikit-learn
-            faiss
             torch
             transformers
             huggingface-hub
-            click
-            tqdm
-            watchdog
             jinja2
             diskcache
             typing-extensions
-            langchain
-            langchain-community
-            sentence-transformers
-            llama-cpp-python
-            python-frontmatter
             mcp
           ];
 
