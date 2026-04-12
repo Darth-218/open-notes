@@ -1,4 +1,4 @@
-__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -17,3 +17,11 @@ build/
 venv/
 env/
 .env
+open_notes/__pycache__
+open_notes/cli/__pycache__
+open_notes/embedding/__pycache__
+open_notes/indexer/__pycache__
+open_notes/llm/__pycache__
+open_notes/query/__pycache__
+open_notes/rag/__pycache__
+open_notes/storage/__pycache__
