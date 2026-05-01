@@ -60,6 +60,9 @@ def reciprocal_rank_fusion(
         >>> keyword_results = [{"chunk_id": "2", "score": 0.7}, {"chunk_id": "3", "score": 0.6}]
         >>> fused = reciprocal_rank_fusion([vector_results, keyword_results])
     """
+    if not results_lists:
+        return []
+
     doc_scores: dict[str, float] = {}
 
     for results in results_lists:
@@ -87,7 +90,8 @@ def reciprocal_rank_fusion(
                     )
                     break
 
-    return fused_results[:len(max(results_lists, key=len))]
+    max_len = max((len(lst) for lst in results_lists), default=0)
+    return fused_results[:max_len]
 
 
 class QueryEngine:

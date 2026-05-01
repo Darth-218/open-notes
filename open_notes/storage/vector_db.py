@@ -114,6 +114,7 @@ class VectorDB:
             return []
 
         query_array = np.array([query_vector], dtype=np.float32)
+        # FIX: Fix parameters
         distances, indices = self.index.search(query_array, min(top_k, self.index.ntotal))
 
         results = []
@@ -124,6 +125,7 @@ class VectorDB:
 
         return results
 
+    # HACK: Refactor
     def delete_by_note_id(self, note_id: str) -> None:
         """Delete all vectors associated with a note.
 
@@ -173,10 +175,13 @@ class VectorDB:
         Returns:
             List of all stored vectors.
         """
-        if self.index is None:
+        if self.index is None or self.index.ntotal == 0:
             return []
-        vectors = faiss.extract_indexed(self.index)
-        return vectors.tolist() if hasattr(vectors, "tolist") else []
+        vectors = []
+        for i in range(self.index.ntotal):
+            vector = self.index.reconstruct(i)
+            vectors.append(vector.tolist())
+        return vectors
 
     def _save(self) -> None:
         """Persist index and metadata to disk."""

@@ -110,7 +110,7 @@ class NoteStorage:
         }
 
     def write_note(
-        self, path: Path, content: str, frontmatter: dict | None = None
+        self, path: Path, content: str, metadata: dict | None = None
     ) -> None:
         """Write a note to disk.
 
@@ -119,7 +119,7 @@ class NoteStorage:
         Args:
             path: Path where to save the note.
             content: Markdown content for the note.
-            frontmatter: Optional YAML metadata dictionary.
+            metadata: Optional YAML metadata dictionary.
 
         Raises:
             IOError: If the note cannot be written.
@@ -134,7 +134,10 @@ class NoteStorage:
         """
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        post = frontmatter.Post(content, **((frontmatter or {})))
+        post = frontmatter.Post(content)
+        if metadata:
+            for key, value in metadata.items():
+                post.metadata[key] = value
 
         with open(path, "w") as f:
             f.write(frontmatter.dumps(post))
