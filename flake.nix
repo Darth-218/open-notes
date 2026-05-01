@@ -31,6 +31,10 @@
           click
           tqdm
 
+          # Testing
+          pytest
+          pytest-asyncio
+
           # Additional dependencies
           numpy
           scipy
