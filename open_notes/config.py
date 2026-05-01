@@ -63,8 +63,10 @@ class Config:
             >>> config = Config.load("/path/to/config.yaml")
         """
         config_path_str = config_path or os.environ.get("OPEN_NOTES_CONFIG", "~/.open_notes/config.yaml")
+        # FIX: Fix str | None warning
         config_path = Path(config_path_str).expanduser()
 
+        # TODO: Verify
         default_path = Path(__file__).parent.parent / "config" / "default.yaml"
         config_dict = {}
 

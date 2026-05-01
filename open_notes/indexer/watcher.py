@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from watchdog.observers import Observer
 
 
+# FIX: Path conversion
 class NoteFileHandler(FileSystemEventHandler):
     """File system event handler for Markdown note files.
 
@@ -97,6 +98,7 @@ class NoteFileHandler(FileSystemEventHandler):
         self.callback(path)
 
 
+# FIX: Types
 class NoteWatcher:
     """Watches a directory for changes to Markdown note files.
 

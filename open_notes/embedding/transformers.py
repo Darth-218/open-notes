@@ -52,6 +52,7 @@ class SentenceTransformerEmbedding(BaseEmbedding):
         self._model = None
         self._dimension: int | None = None
 
+    # TODO: Understand
     @property
     def model(self) -> SentenceTransformer:
         """Lazy-load the sentence-transformers model.

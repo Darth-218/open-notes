@@ -225,7 +225,8 @@ class KeywordIndex:
         cursor = conn.cursor()
 
         cursor.execute("SELECT COUNT(*) FROM chunks")
-        count = cursor.fetchone()[0] if cursor.fetchone() else 0
+        result = cursor.fetchone()
+        count = result[0] if result else 0
 
         conn.close()
         return {"total_chunks": count}
